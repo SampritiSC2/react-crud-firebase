@@ -1,26 +1,25 @@
-import { FormEventHandler, useEffect, useState } from "react";
-import { addPost } from "../api/api";
+import { useEffect, useState } from "react";
+import { addPost, editPost } from "../api/api";
 import { useNavigate } from "react-router-dom";
 
-const PostForm = () => {
+const PostForm = (props) => {
   const navigate = useNavigate();
-  const [title, setTitle] = useState<string>("");
-  const [titleIsValid, setTitleIsValid] = useState<boolean>(false);
-  const [titleTouched, setTitleTouched] = useState<boolean>(false);
-  const [titleErrorMessage, setTitleErrorMessage] = useState<null | string>(
-    null
+
+  const [title, setTitle] = useState(!props.addMode ? props.post.title : "");
+  const [titleIsValid, setTitleIsValid] = useState(false);
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [titleErrorMessage, setTitleErrorMessage] = useState(null);
+
+  const [content, setContent] = useState(
+    !props.addMode ? props.post.content : ""
   );
+  const [contentIsValid, setContentIsValid] = useState(false);
+  const [contentTouched, setContentTouched] = useState(false);
+  const [contentErrorMessage, setContentErrorMessage] = useState(null);
 
-  const [content, setContent] = useState<string>("");
-  const [contentIsValid, setContentIsValid] = useState<boolean>(false);
-  const [contentTouched, setContentTouched] = useState<boolean>(false);
-  const [contentErrorMessage, setContentErrorMessage] = useState<null | string>(
-    null
-  );
+  const [error, setError] = useState(null);
 
-  const [error, setError] = useState<null | string>(null);
-
-  const [formIsValid, setFormIsValid] = useState<boolean>(false);
+  const [formIsValid, setFormIsValid] = useState(false);
 
   useEffect(() => {
     if (title.trim().length === 0) {
@@ -56,19 +55,17 @@ const PostForm = () => {
     }
   }, [titleIsValid, contentIsValid]);
 
-  const handleTitleChange: FormEventHandler<HTMLInputElement> = (event) => {
+  const handleTitleChange = (event) => {
     setTitleTouched(true);
     // Here the state update is not synchronous so we might not get the updated state immediately
-    const value = (event.target as HTMLInputElement).value;
+    const value = event.target.value;
     setTitle(value);
   };
 
-  const handleContentChange: FormEventHandler<HTMLTextAreaElement> = (
-    event
-  ) => {
+  const handleContentChange = (event) => {
     setContentTouched(true);
     // Here the state update is not synchronous so we might not get the updated state immediately
-    const value = (event.target as HTMLInputElement).value;
+    const value = event.target.value;
     setContent(value);
   };
 
@@ -80,14 +77,17 @@ const PostForm = () => {
     setContentTouched(true);
   };
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!formIsValid) return;
     setError(null);
 
     try {
-      const data = await addPost(title, content);
-      console.log(data);
+      if (props.addMode) {
+        const data = await addPost(title, content);
+      } else {
+        const data = await editPost(title, content, props.id);
+      }
       resetForm();
       navigate("/posts");
     } catch (error) {
@@ -116,7 +116,9 @@ const PostForm = () => {
   return (
     <div className="card mt-2 border-0 shadow-sm p-3">
       <div className="card-body">
-        <h2 className="text-center">ADD POST</h2>
+        <h2 className="text-center">
+          {props.addMode ? "ADD POST" : "EDIT POST"}
+        </h2>
         {error && <div className="alert alert-danger mt-2">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="form-group">
@@ -154,7 +156,7 @@ const PostForm = () => {
             className="btn btn-primary mt-2"
             disabled={!formIsValid}
           >
-            Add Post
+            {props.addMode ? "Add Post" : "Edit Post"}
           </button>
         </form>
       </div>

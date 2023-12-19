@@ -2,10 +2,11 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Home from "./pages/Home";
 import Posts from "./pages/Posts";
 import Login from "./pages/Login";
-import Signup from "./pages/Signup";
 import RootLayout from "./pages/RootLayout";
 import AddPost from "./pages/AddPost";
 import EditPost from "./pages/EditPost";
+import { AuthContext } from "./context/auth-context";
+import { useEffect, useState } from "react";
 
 const router = createBrowserRouter([
   {
@@ -13,30 +14,24 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       {
-        path: "",
+        index: true,
         element: <Home />,
       },
       {
         path: "posts",
         element: <Posts />,
-        children: [
-          {
-            path: "add",
-            element: <AddPost />,
-          },
-          {
-            path: ":id/edit",
-            element: <EditPost />,
-          },
-        ],
+      },
+      {
+        path: "add-post",
+        element: <AddPost />,
+      },
+      {
+        path: "edit-post/:id",
+        element: <EditPost />,
       },
       {
         path: "login",
         element: <Login />,
-      },
-      {
-        path: "signup",
-        element: <Signup />,
       },
     ],
   },
@@ -45,7 +40,19 @@ const router = createBrowserRouter([
 // /posts/add
 
 function App() {
-  return <RouterProvider router={router} />;
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setUser(JSON.parse(user));
+    }
+  }, []);
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      <RouterProvider router={router} />;
+    </AuthContext.Provider>
+  );
 }
 
 export default App;
